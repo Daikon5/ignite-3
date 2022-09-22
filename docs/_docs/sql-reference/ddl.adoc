@@ -14,7 +14,7 @@
 // limitations under the License.
 = Data Definition Language (DDL)
 
-This section walks you through all data definition language (DDL) commands supported by Apache Ignite 3.0 Alpha 5.
+This section walks you through all data definition language (DDL) commands supported by Apache Ignite 3.0 Alpha.
 
 == CREATE TABLE
 
@@ -23,7 +23,7 @@ Creates a new table.
 [source,sql]
 ----
 CREATE TABLE [IF NOT EXISTS] [simpleName | schemaName.simpleName] (tableColumn [, tableColumn]...)
-[COLOCATE [BY] (columnName [, columnName]...)]
+[COLOCATE [BY] (tableColumn [, tableColumn]...)]
 [ENGINE engineName]
 [WITH paramName=paramValue [,paramName=paramValue]...]
 tableColumn = columnName columnType [[NOT] NULL] [DEFAULT defaultValue] [PRIMARY KEY]
@@ -33,7 +33,7 @@ Parameters:
 
 * `tableName` - name of the table.
 * `tableColumn` - name and type of a column to be created in the new table.
-* `DEFAULT` - specifies a default value for the column. You can specify a constant value, or use a link:sql-reference/ddl#system-functions[system function] to generate a value.
+* `DEFAULT` - specifies a default value for the column. Only constant values are accepted.
 * `IF NOT EXISTS` - create the table only if a table with the same name does not exist.
 * `ENGINE` - selects the storage engine to use. Currently `pagememory` and `rocksdb` are available.
 * `COLOCATED BY` - colocation key. The key can be composite. Primary key must include colocation key. Was `affinity_key` in Ignite 2.x.
@@ -43,8 +43,28 @@ Parameters:
 ** `Partitions` - sets the number of table partitions.
 ** `dataRegion` - sets the data region to work with.
 
-image::images/svg/create_table_bnf1.svg[Embedded,opts=inline]
-image::images/svg/create_table_bnf2.svg[Embedded,opts=inline]
+[.diagram-container]
+Diagram(
+Optional('+', 'skip'),
+Choice(0,
+NonTerminal('name-start char'),
+NonTerminal('escape')),
+ZeroOrMore(
+Choice(0,
+NonTerminal('name char'),
+NonTerminal('escape'))))
+
+[.diagram-container]
+Diagram(
+Choice(0,
+NonTerminal('name-start char'),
+NonTerminal('escape')),
+ZeroOrMore(
+Choice(0,
+NonTerminal('name char'),
+NonTerminal('escape'))))
+
+
 
 Examples:
 
@@ -85,7 +105,7 @@ Parameters:
 - `qualified_table_name` - the name of the table.
 - `LOGGING` - enables write-ahead logging for the table. The command is relevant only if Ignite link:https://ignite.apache.org/docs/3.0.0-alpha/persistence[persistence,window=_blank] is used.
 
-image::images/svg/alter_table_logging_bnf.svg[Embedded,opts=inline]
+
 
 * *ALTER TABLE IF EXISTS table NOLOGGING*
 
@@ -100,7 +120,7 @@ Parameters:
 - `qualified_table_name` - the name of the table.
 - `NOLOGGING` - disables write-ahead logging for the table. The command is relevant only if Ignite link:https://ignite.apache.org/docs/3.0.0-alpha/persistence[persistence,window=_blank] is used.
 
-image::images/svg/alter_table_no_logging_bnf.svg[Embedded,opts=inline]
+
 
 * *ALTER TABLE IF EXISTS table ADD COLUMN IF NOT EXISTS (column1 int, column2 int)*
 
@@ -118,8 +138,7 @@ Parameters:
 - `IF NOT EXISTS` - do not throw an error if a column with the same name already exists.
 - `column_definition_or_list` - the name of the column or the list of columns to be added.
 
-image::images/svg/alter_table_column_no_bnf1.svg[Embedded,opts=inline]
-image::images/svg/alter_table_column_no_bnf2.svg[Embedded,opts=inline]
+
 
 * *ALTER TABLE IF EXISTS table ADD COLUMN IF EXISTS (column1, column2 int)*
 
@@ -136,8 +155,7 @@ Parameters:
 - `COLUMN` - name of the defined column.
 - `column_list` - the name of the list of columns to be removed.
 
-image::images/svg/alter_table_column_yes_bnf1.svg[Embedded,opts=inline]
-image::images/svg/alter_table_column_yes_bnf2.svg[Embedded,opts=inline]
+
 
 - The command does not remove actual data from the cluster which means that if the column 'name' is dropped, the value of the 'name' is still stored in the cluster. This limitation is to be addressed in the next releases.
 - If the column was indexed, the index has to be dropped manually using the 'DROP INDEX' command.
@@ -229,7 +247,7 @@ Parameters:
 - `tableName` - the name of the table.
 - `IF NOT EXISTS` - do not throw an error if a table with the same name does not exist.
 
-image::images/svg/drop_table_bnf.svg[Embedded,opts=inline]
+
 
 Both DDL and DML commands targeting the same table are blocked while the `DROP TABLE` is in progress.
 Once the table is dropped, all pending commands will fail with appropriate errors.
@@ -245,65 +263,11 @@ Drop Person table if the one exists:
 DROP TABLE IF EXISTS "Person";
 ----
 
-== CREATE INDEX
-
-Creates a new index.
-
-[source,sql]
-----
-CREATE INDEX [IF NOT EXISTS] name ON tableName
-[USING { HASH | TREE }]
-(column_definition [, column_definition]...);
-----
-
-Parameters:
-
-
-* `name` - name of the index.
-* `tableName` - name of the table to create the index on.
-* `IF NOT EXISTS` - create the index only if an index with the same name does not exist.
-* `USING` - specifies whether the command creates a sorted index or a hash index. Possible values: `HASH`, `TREE`.
-
-
-//NOTE: Add image
-
-Examples:
-
-Create index Persons for Person table:
-
-[source,sql]
-----
-CREATE INDEX IF NOT EXISTS Persons ON Person (column1)
-----
-
-== DROP INDEX
-
-[source,sql]
-----
-DROP INDEX [IF EXISTS] indexName;
-----
-
-Parameters:
-
-- indexName - the name of the index.
-- `IF EXISTS` - do not throw an error if an index with the specified name does not exist.
-
-
-
-Examples:
-
-Drop index if the one exists:
-
-[source,sql]
-----
-DROP INDEX IF EXISTS Persons;
-----
-
 = Grammar Reference
 
 == column_definition_or_list
 
-image::images/svg/column_definition_or_list_bnf.svg[Embedded,opts=inline]
+
 
 Referenced by:
 
@@ -311,7 +275,7 @@ Referenced by:
 
 == column_definition
 
-image::images/svg/columns_definition_bnf.svg[Embedded,opts=inline]
+
 
 Referenced by:
 
@@ -319,7 +283,7 @@ Referenced by:
 
 == column_list
 
-image::images/svg/column_list_bnf.svg[Embedded,opts=inline]
+
 
 Referenced by:
 
@@ -327,7 +291,7 @@ Referenced by:
 
 == constraint
 
-image::images/svg/pk_constraint_bnf.svg[Embedded,opts=inline]
+
 
 Referenced by:
 
@@ -335,43 +299,10 @@ Referenced by:
 
 == qualified_table_name
 
-image::images/svg/qualified_table_name_bnf.svg[Embedded,opts=inline]
+
 
 Referenced by:
 
 * link:sql-reference/ddl#сreate-table[CREATE TABLE]
 * link:sql-reference/ddl#alter-table[ALTER TABLE]
 * link:sql-reference/ddl#drop-table[DROP TABLE]
-
-== column_definition
-//NOTE: Replace code with image
-
-```
-column_name [ASC | DESC] [NULLS {FIRST | LAST}]
-```
-
-Parameters:
-
-* `ASC` or `DESC` - specifies that the column should be sorted in an ascending or descending order respectively.
-* `NULLS` - specifies whether null values will be at the start or at the end of the index. Possible values: `FIRST`, `LAST`.
-
-Referenced by:
-
-* link:sql-reference/ddl#сreate-index[CREATE INDEX]
-
-= System Functions
-
-== gen_random_uuid
-
-This function generates a random UUID value each time it is called.
-
-Example:
-
-[source,sql]
-----
-CREATE TABLE t (id varchar default gen_random_uuid primary key, val int)
-----
-
-Referenced by:
-
-* link:sql-reference/ddl#create-table[CREATE TABLE]
