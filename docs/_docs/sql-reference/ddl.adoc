@@ -47,7 +47,7 @@ Parameters:
 Diagram(
 Optional('+', 'skip'),
 Choice(0,
-NonTerminal('name-start char', {href:'http://www.biba.com''}),
+NonTerminal('name-start char', {href:'http://www.biba.com'}),
 NonTerminal('escape')),
 ZeroOrMore(
 Choice(0,
